@@ -74,10 +74,13 @@ if uploaded_file and "model" in st.session_state:
     with col1:
         st.image(uploaded_file, caption="Imagen subida", use_column_width=True)
     with col2:
-        st.write(f"**Predicción:** `{class_name}`")
-        st.progress(confidence)
+        st.markdown(f"<h3 style='color:#2c3e50;'>Predicción: <span style='color:#3498db;'>{class_name}</span></h3>", unsafe_allow_html=True)
         st.write(f"Confianza: **{confidence:.2%}**")
+
+        # Convertir a porcentaje y tipo int para la barra
+        progress_value = int(float(confidence) * 100)
+        st.progress(progress_value)
+
 
 elif uploaded_file and "model" not in st.session_state:
     st.warning("⚠️ Entrena el modelo primero antes de hacer predicciones.")
-
