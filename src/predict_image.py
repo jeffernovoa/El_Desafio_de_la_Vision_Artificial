@@ -12,7 +12,8 @@ def preprocess_uploaded_image(uploaded_file):
     return image_array
 
 def predict_class(model, image_array):
-    predictions = model.predict(image_array)
-    class_index = np.argmax(predictions)
+    predictions = model.predict(image_array)[0]
     class_names = ['Avión', 'Automóvil', 'Pájaro', 'Gato', 'Ciervo', 'Perro', 'Rana', 'Caballo', 'Barco', 'Camión']
-    return class_names[class_index], predictions[0][class_index]
+    top_indices = predictions.argsort()[::-1][:3]
+    top_classes = [(class_names[i], float(predictions[i])) for i in top_indices]
+    return top_classes

@@ -68,17 +68,29 @@ st.divider()
 if uploaded_file and "model" in st.session_state:
     st.subheader("🔍 Clasificación de imagen subida")
     image_array = preprocess_uploaded_image(uploaded_file)
-    class_name, confidence = predict_class(st.session_state.model, image_array)
+    top_classes = predict_class(st.session_state.model, image_array)
 
     col1, col2 = st.columns([1, 2])
     with col1:
         st.image(uploaded_file, caption="Imagen subida", use_column_width=True)
+
     with col2:
-        st.markdown(f"<h3 style='color:#2c3e50;'>Predicción: <span style='color:#3498db;'>{class_name}</span></h3>", unsafe_allow_html=True)
-        st.write(f"Confianza: **{confidence:.2%}**")
+        pred_class, pred_conf = top_classes[0]
+        st.markdown(f"<h3 style='color:#2c3e50;'>Predicción principal: <span style='color:#3498db;'>{pred_class}</span></h3>", unsafe_allow_html=True)
+        st.write(f"Confianza: **{pred_conf:.2%}**")
+        st.progress(int(float(pred_conf) * 100))
+
+        # Tabla de las 3 clases más probables
+        st.subheader("📊 Top 3 predicciones")
+        data = {
+            "Clase": [c for c, _ in top_classes],
+            "Confianza (%)": [f"{p*100:.2f}%" for _, p in top_classes],
+            "Diferencia con la principal": [f"{(pred_conf - p)*100:.2f}%" if i != 0 else "-" for i, (_, p) in enumerate(top_classes)]
+        }
+        st.table(data)
 
         # Convertir a porcentaje y tipo int para la barra
-        progress_value = int(float(confidence) * 100)
+        progress_value = int(float(pred_conf) * 100)
         st.progress(progress_value)
 
 
