@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 
 # Configuración de la página
 st.set_page_config(page_title="Visión Artificial con CIFAR-10", layout="wide", page_icon="🧠")
+if "image_history" not in st.session_state:
+    st.session_state.image_history = {}
 
 # Estilo personalizado
 st.markdown("""
@@ -64,34 +66,43 @@ if train_now:
 
 st.divider()
 
-# Clasificación de imagen
+# Clasificación de imagen y almacenamiento en historial
 if uploaded_file and "model" in st.session_state:
-    st.subheader("🔍 Clasificación de imagen subida")
     image_array = preprocess_uploaded_image(uploaded_file)
     top_classes = predict_class(st.session_state.model, image_array)
 
+    # Guardar resultados en el historial
+    st.session_state.image_history[uploaded_file.name] = {
+        "file": uploaded_file,
+        "top_classes": top_classes
+    }
+
+# Mostrar selector y resultados guardados
+if st.session_state.image_history:
+    st.subheader("🖼️ Imágenes clasificadas")
+    selected_image = st.selectbox("Selecciona una imagen para ver su resultado", list(st.session_state.image_history.keys()))
+
+    data = st.session_state.image_history[selected_image]
+    top_classes = data["top_classes"]
+    pred_class, pred_conf = top_classes[0]
+
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image(uploaded_file, caption="Imagen subida", use_column_width=True)
+        st.image(data["file"], caption=selected_image, use_column_width=True)
 
     with col2:
-        pred_class, pred_conf = top_classes[0]
         st.markdown(f"<h3 style='color:#2c3e50;'>Predicción principal: <span style='color:#3498db;'>{pred_class}</span></h3>", unsafe_allow_html=True)
         st.write(f"Confianza: **{pred_conf:.2%}**")
         st.progress(int(float(pred_conf) * 100))
 
-        # Tabla de las 3 clases más probables
         st.subheader("📊 Top 3 predicciones")
-        data = {
+        table_data = {
             "Clase": [c for c, _ in top_classes],
             "Confianza (%)": [f"{p*100:.2f}%" for _, p in top_classes],
             "Diferencia con la principal": [f"{(pred_conf - p)*100:.2f}%" if i != 0 else "-" for i, (_, p) in enumerate(top_classes)]
         }
-        st.table(data)
+        st.table(table_data)
 
-        # Convertir a porcentaje y tipo int para la barra
-        progress_value = int(float(pred_conf) * 100)
-        st.progress(progress_value)
 
 
 elif uploaded_file and "model" not in st.session_state:
